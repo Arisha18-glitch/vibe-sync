@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe-Sync | AI Interior Designer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Add this line with your existing styles -->
+    <link rel="stylesheet" href="/assets/styles/gallery.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000000;
+            font-family: 'Space Grotesk', sans-serif;
+            color: white;
+        }
+
+
+        /* Gallery-specific styles */
+        #image-gallery img {
+            transition: transform 0.3s ease;
+        }
+
+        #image-gallery img:hover {
+            transform: scale(1.01);
+        }
+
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        /* Vignette overlay for depth */
+        #canvas-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+            pointer-events: none;
+        }
+
+        /* Center UI Container */
+        #ui-center {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            text-align: center;
+            width: 90%;
+            max-width: 700px;
+
+
+        }
+
+        /* Logo */
+        .logo {
+            font-size: 72px;
+            font-weight: 700;
+            letter-spacing: 12px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #00ffcc 0%, #00b8ff 50%, #ff0099 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            animation: glow-pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes glow-pulse {
+
+            0%,
+            100% {
+                filter: drop-shadow(0 0 20px rgba(0, 255, 204, 0.5));
+            }
+
+            50% {
+                filter: drop-shadow(0 0 40px rgba(255, 0, 153, 0.7));
+            }
+        }
+
+        .tagline {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 4px;
+            margin-bottom: 60px;
+            font-weight: 300;
+            text-transform: uppercase;
+        }
+
+        /* Input Container with Glassmorphism */
+        .input-container {
+            position: relative;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(0, 255, 204, 0.2);
+            border-radius: 20px;
+            padding: 8px;
+            transition: all 0.4s ease;
+        }
+
+        .input-container:focus-within {
+            border-color: #00ffcc;
+            box-shadow:
+                0 0 30px rgba(0, 255, 204, 0.3),
+                inset 0 0 20px rgba(0, 255, 204, 0.05);
+            transform: scale(1.02);
+        }
+
+        input {
+            width: 100%;
+            padding: 25px 30px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 18px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 400;
+            outline: none;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+            font-weight: 300;
+        }
+
+        /* Generate Button with Neon Effect */
+        .generate-btn {
+            position: relative;
+            width: 100%;
+            padding: 25px;
+            background: linear-gradient(135deg, #00ffcc, #00b8ff, #ff0099);
+            border: none;
+            border-radius: 18px;
+            color: #000;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .generate-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .generate-btn:hover::before {
+            left: 100%;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow:
+                0 0 50px rgba(0, 255, 204, 0.6),
+                0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .generate-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .generate-btn:disabled:hover {
+            box-shadow: none;
+        }
+
+        /* Status Box */
+        #status {
+            margin-top: 30px;
+            padding: 20px 30px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            color: #00ffcc;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        #status.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Bottom Info */
+        .bottom-info {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Particle count badge */
+        .particle-badge {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            z-index: 10;
+            padding: 15px 25px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #00ffcc;
+        }
+
+        /* Loading animation */
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #00ffcc;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div class="particle-badge">
+        <span id="particle-count">0</span> Particles Active
+    </div>
+    <!-- Sound Control Button -->
+    <div id="sound-control" style="
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    ">
+        <button id="sound-toggle" style="
+        background: rgba(0, 255, 204, 0.1);
+        border: 1px solid rgba(0, 255, 204, 0.3);
+        color: #00ffcc;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+    ">
+            <i id="sound-icon" class="fas fa-volume-up"></i>
+        </button>
+    </div>
+
+    <div id="ui-center">
+        <div class="logo">VIBE-SYNC</div>
+        <div class="tagline">AI-Powered Interior Designer</div>
+
+        <div class="input-container">
+            <input type="text" id="prompt-input" placeholder="Describe your dream space..." spellcheck="false">
+        </div>
+
+        <button class="generate-btn" id="generate-btn">
+            Generate ✨
+        </button>
+
+        <div id="status"></div>
+    </div>
+
+    <div class="bottom-info">
+        Powered by Three.js • Stable Diffusion • ZoeDepth
+    </div>
+
+    <script type="module" src="/main.js"></script>
+
+</body>
+
+</html>
